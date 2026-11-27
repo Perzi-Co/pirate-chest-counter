@@ -1,17 +1,13 @@
-"""
-this is the main shit where the counter happens
-I mean I tried doing it in main but I decided that I should do it here
-and just call it or import it, instance it, in the main.py file,
-so it can be easier to read, and to manage, 
-that same happened with the different files!
-"""
+import ctypes
+import sys
+from ctypes import wintypes
 
 from PySide6.QtCore import (
-    QEasingCurve, QObject, QRectF, QTimer,
-    QVariantAnimation, Qt, Signal,
+    QEasingCurve, QRectF, QTimer, QVariantAnimation, Qt, Signal,
 )
 from PySide6.QtGui import (
-    QColor, QFont, QPainter, QPainterPath, QPen, QPixmap,
+    QBrush, QColor, QConicalGradient, QFont,
+    QPainter, QPainterPath, QPen, QPixmap,
 )
 from PySide6.QtWidgets import (
     QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget,
@@ -23,15 +19,18 @@ from settings_dialog import SettingsDialog
 from tracker import TrackDatChest
 
 
-class HotkeyBridge(QObject):
-    """keyboard runs callbacks on its own thread; signals hand them safely to Qt."""
-    add = Signal()
-    undo = Signal()
-    split = Signal()
+def _mci(cmd: str) -> None:
+    if sys.platform != "win32":
+        return
+    winmm = ctypes.windll.winmm
+    winmm.mciSendStringW.argtypes = [
+        wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.UINT, wintypes.HANDLE
+    ]
+    winmm.mciSendStringW.restype = wintypes.DWORD
+    winmm.mciSendStringW(cmd, None, 0, None)
 
 
 class CounterWidget(QWidget):
-    """Hardware-friendly number display with smooth scale pop + color flash."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -121,22 +120,30 @@ class MainWindow(QWidget):
         self.settings = Settings()
         self.settings.load()
         self._dialog: SettingsDialog | None = None
+        self._input_mgr = None
         self._drag_pos = None
 
         self._cached_wall_path = ""
         self._raw_wallpaper: QPixmap | None = None
         self._bg_cache: QPixmap | None = None
 
+        self._loaded_sound_path = ""
+        self._rgb_angle = 0.0
+
         self._save_timer = QTimer(self)
         self._save_timer.setSingleShot(True)
         self._save_timer.setInterval(500)
         self._save_timer.timeout.connect(self.tdc.flush)
 
-        # Low-overhead 1s timer for active match pace display
         self._pace_timer = QTimer(self)
         self._pace_timer.setTimerType(Qt.CoarseTimer)
         self._pace_timer.setInterval(1000)
         self._pace_timer.timeout.connect(self._update_pace)
+
+        self._rgb_timer = QTimer(self)
+        self._rgb_timer.setTimerType(Qt.CoarseTimer)
+        self._rgb_timer.setInterval(33)
+        self._rgb_timer.timeout.connect(self._tick_rgb)
 
         self.setWindowTitle("Pirate Chest Counter")
         self.setWindowFlag(Qt.FramelessWindowHint, True)
@@ -196,6 +203,32 @@ class MainWindow(QWidget):
         self._reposition_close()
         self.btn_close.raise_()
         self.refresh()
+
+    def attach_input_manager(self, input_mgr) -> None:
+        self._input_mgr = input_mgr
+
+    def _sync_sound(self) -> None:
+        path = self.settings.sound_path
+        if path == self._loaded_sound_path:
+            return
+        self.close_sound()
+        if path:
+            safe = path.replace('"', "")
+            _mci(f'open "{safe}" alias pcc_sfx')
+            self._loaded_sound_path = path
+
+    def _play_sound(self) -> None:
+        if self._loaded_sound_path:
+            _mci("play pcc_sfx from 0")
+
+    def close_sound(self) -> None:
+        if self._loaded_sound_path:
+            _mci("close pcc_sfx")
+            self._loaded_sound_path = ""
+
+    def _tick_rgb(self) -> None:
+        self._rgb_angle = (self._rgb_angle + 3.0) % 360.0
+        self.update()
 
     def _reposition_close(self) -> None:
         self.btn_close.move(self.width() - self.btn_close.width() - 8, 8)
@@ -259,13 +292,14 @@ class MainWindow(QWidget):
         if not drew_bg and not s.transparent:
             p.fillRect(0, 0, w, h, QColor(s.bg_color))
 
-        p.setClipping(False)
-        pen = QPen(QColor(s.count_color), 1.0)
-        p.setPen(pen)
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(rect, self.CORNER_RADIUS, self.CORNER_RADIUS)
-        p.end()
+        if not s.rgb_outline:
+            p.setClipping(False)
+            pen = QPen(QColor(s.count_color), 1.0)
+            p.setPen(pen)
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(rect, self.CORNER_RADIUS, self.CORNER_RADIUS)
 
+        p.end()
         self._bg_cache = cache
 
     def _draw_wallpaper(
@@ -287,8 +321,28 @@ class MainWindow(QWidget):
             )
 
     def paintEvent(self, _event) -> None:
+        p = QPainter(self)
         if self._bg_cache is not None:
-            QPainter(self).drawPixmap(0, 0, self._bg_cache)
+            p.drawPixmap(0, 0, self._bg_cache)
+
+        if self.settings.rgb_outline:
+            colors = self.settings.rgb_colors
+            n = len(colors)
+            if n >= 2:
+                p.setRenderHint(QPainter.Antialiasing, True)
+                w, h = self.width(), self.height()
+                grad = QConicalGradient(w * 0.5, h * 0.5, self._rgb_angle)
+                for i, hex_c in enumerate(colors):
+                    grad.setColorAt(i / n, QColor(hex_c))
+                grad.setColorAt(1.0, QColor(colors[0]))
+
+                p.setPen(QPen(QBrush(grad), 1.5))
+                p.setBrush(Qt.NoBrush)
+                p.drawRoundedRect(
+                    QRectF(0.75, 0.75, w - 1.5, h - 1.5),
+                    self.CORNER_RADIUS,
+                    self.CORNER_RADIUS,
+                )
 
     def _apply_settings(self) -> None:
         s = self.settings
@@ -298,7 +352,7 @@ class MainWindow(QWidget):
             QLabel#stats {{ color: #8b949e; font-size: 15px; }}
             QLabel#pace {{ color: #8b949e; font-size: 13px; }}
             QPushButton {{
-                background-color: #161b22; color: #c9d1d9;
+                background-color: #000000; color: #c9d1d9;
                 border: 1px solid #30363d; border-radius: 8px;
                 padding: 10px; font-size: 14px;
             }}
@@ -317,12 +371,20 @@ class MainWindow(QWidget):
         if not s.animate_count:
             self.count.reset_anim()
         self.overlay.set_mode(s.animation)
+        self._sync_sound()
+
+        if s.rgb_outline:
+            if not self._rgb_timer.isActive():
+                self._rgb_timer.start()
+        else:
+            self._rgb_timer.stop()
+
         self._rebuild_bg_cache()
         self.update()
 
     def open_settings(self) -> None:
         if self._dialog is None:
-            self._dialog = SettingsDialog(self.settings, self.tdc, self)
+            self._dialog = SettingsDialog(self.settings, self.tdc, self._input_mgr, self)
             self._dialog.changed.connect(self._on_settings_changed)
             self._dialog.data_changed.connect(self.refresh)
             self._dialog.hotkeys_changed.connect(self.hotkeys_changed.emit)
@@ -343,6 +405,7 @@ class MainWindow(QWidget):
     def on_add(self) -> None:
         self.tdc.daChest()
         self._save_timer.start()
+        self._play_sound()
         if self.settings.animate_count:
             self.count.trigger_pop()
         self.refresh()

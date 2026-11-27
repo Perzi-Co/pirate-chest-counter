@@ -13,9 +13,11 @@ I enjoy customization so I let almost everything be changed here.
 - **Global Hotkeys:** Count chests without leaving your game (defaults to `F6` for +1, `F7` for Undo, `F8` for Split. all rebindable in settings).
 - **Fully Customizable UI:**
   - Set any custom wallpaper (`cover`, `stretch`, or `contain`), use a solid color, or go fully transparent.
+  - Hitsounds! Use any .mp3 or .wav file as your hitsoun. whenever you press +1 chest, A custom sound will be heard.
   - Pick any font installed on your system and customize the accent/number colors.
   - Optional, 60 FPS particle overlays (`rain`, `snow`, `sparkles`) built with cached sprites so they don't lag your game.
   - Toggleable number pop animation and decimal precision.
+  - Custom RGB Outline: A looping animation of two or three colors in the outline of the window.
 
 - **Lightweight:** Custom `QPainter` caching, debounced JSON saves, and zero heavy dependencies.
 
@@ -25,7 +27,7 @@ I enjoy customization so I let almost everything be changed here.
 
 1. **Go to releases, and download the zip:**
  
-   Click or go to releases, download the main zip file, extract it, and run the program.
+   Click or go to releases, select the latest release, download the main zip file, extract it, and run the program.
 
 ## Installation Via Cloning
 
