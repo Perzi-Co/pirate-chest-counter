@@ -1,10 +1,11 @@
 import json
+import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
+APP_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+DATA_DIR = APP_DIR / "data"
 SETTINGS_FILE = DATA_DIR / "settings.json"
-
 
 @dataclass
 class Settings:

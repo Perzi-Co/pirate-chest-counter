@@ -1,9 +1,11 @@
 import json
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DATA_FILE = Path(__file__).parent / "data" / "history.json"
+APP_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+DATA_FILE = APP_DIR / "data" / "history.json"
 
 
 @dataclass

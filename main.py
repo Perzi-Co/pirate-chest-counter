@@ -24,9 +24,9 @@ def _set_windows_app_id() -> None:
 
 
 def _load_icon() -> QIcon:
-    for name in ("icon.ico"):
+    for name in ("icon.ico", "icon.png"):
         p = ASSETS_DIR / name
-        if p.exists():
+        if p.is_file():
             img = QImage.fromData(p.read_bytes())
             if not img.isNull():
                 icon = QIcon()
@@ -37,7 +37,6 @@ def _load_icon() -> QIcon:
                     icon.addPixmap(pm)
                 return icon
     return QIcon()
-
 
 def main() -> None:
     _set_windows_app_id()

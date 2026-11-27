@@ -1,28 +1,33 @@
-# Pirate Chest Counter
+# Simple Fortnight Chest Counter (4 the pirate token!)
 
-I made this because I needed a quick way to keep track of how many chests I was opening mid-match without alt-tabbing to a notepad or running some bloated overlay that eats half my RAM. Kind of vibecoded it at first, then went down a rabbit hole optimizing the rendering so it stays locked at 60 FPS with basically zero CPU overhead.
+I made this because I needed a quick way to keep track of how many chests I was opening mid-match without alt-tabbing to a notepad or running some bloated overlay that eats half my RAM. Or some kind of injected dll that could get me banned or something... Vibecoded most of the hard parts, then went down a rabbit hole optimizing the rendering so it doesnt consume my resources.
 
-It sits cleanly on top of your game, listens to global hotkeys while you play, and lets you customize pretty much everything about how it looks.
+It actually does sits cleanly on top of your game, listens to global hotkeys while you play, and lets you customize pretty much everything about how it looks.
+I enjoy customization so I let almost everything be changed here.
 
-![Main Counter Preview](assets/preview-main.png)
+![Main Counter Preview](assets/ph1.png)
+![Main Counter Preview](assets/ph3.png)
 
 ## Features
 
-- **Global Hotkeys:** Count chests without leaving your game (defaults to `F6` for +1, `F7` for Undo, `F8` for Split—all rebindable in settings).
+- **Global Hotkeys:** Count chests without leaving your game (defaults to `F6` for +1, `F7` for Undo, `F8` for Split. all rebindable in settings).
 - **Fully Customizable UI:**
-  - Set any custom **wallpaper** (`cover`, `stretch`, or `contain`), use a solid color, or go **fully transparent**.
-  - Pick any **font** installed on your system and customize the accent/number colors.
-  - Optional **60 FPS particle overlays** (`rain`, `snow`, `sparkles`) built with cached sprites so they don't lag your game.
+  - Set any custom wallpaper (`cover`, `stretch`, or `contain`), use a solid color, or go fully transparent.
+  - Pick any font installed on your system and customize the accent/number colors.
+  - Optional, 60 FPS particle overlays (`rain`, `snow`, `sparkles`) built with cached sprites so they don't lag your game.
   - Toggleable number pop animation and decimal precision.
-- **Loot Route Pace & Stats:**
-  - Automatically starts a timer on your first chest of the match and shows your live **chests/min** pace.
-  - Hitting **Split** logs the match, resets the counter, and shows how many chests you pulled in how many minutes.
-  - Built-in **Edit Data** modal in case you misclick or forget to split, plus a one-click reset.
+
 - **Lightweight:** Custom `QPainter` caching, debounced JSON saves, and zero heavy dependencies.
 
-![Settings & Customization](assets/preview-settings.png)
+![Settings & Customization](assets/ph2.png)
 
-## Installation
+## Installation 
+
+1. **Go to releases, and download the zip:**
+ 
+   Click or go to releases, download the main zip file, extract it, and run the program.
+
+## Installation Via Cloning
 
 1. **Clone the repository:**
    ```bash
@@ -46,18 +51,6 @@ It sits cleanly on top of your game, listens to global hotkeys while you play, a
 | :--- | :--- |
 | `F6` | `+1 Chest` (starts match timer automatically) |
 | `F7` | `Undo` (removes 1 chest from current match) |
-| `F8` | `Split` (saves current match to history & resets counter) |
+| `F8` | `Split` (saves current match to history AND resets counter) |
 
-*Drag anywhere on the window to move it. Click `⚙` to change keybinds, themes, wallpapers, or edit your match history.*
-
-## Project Structure
-
-```text
-├── main.py             # Entry point & global hotkey bridge
-├── window.py           # Frameless overlay, cached background & counter widget
-├── particles.py        # Sprite-cached 60fps particle system
-├── tracker.py          # Match stats, pace timer & JSON persistence
-├── settings.py         # User preferences dataclass
-├── settings_dialog.py  # Customization UI, hotkey capture & data editor
-└── assets/             # App icon and README screenshots
-```
+*Drag anywhere on the window to move it. Click `⚙` to change keybinds, themes, wallpapers, or whatever the hell you want to do*
