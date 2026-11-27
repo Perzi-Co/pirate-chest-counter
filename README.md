@@ -26,7 +26,7 @@ It sits cleanly on top of your game, listens to global hotkeys while you play, a
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/Perzi-Co/pirate-chest-counter.git](https://github.com/YOUR_USERNAME/pirate-chest-counter.git)
+   git clone [https://github.com/Perzi-Co/pirate-chest-counter.git](https://github.com/Perzi-Co/pirate-chest-counter.git)
    cd pirate-chest-counter
    ```
 
